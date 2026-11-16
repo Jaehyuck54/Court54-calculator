@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>54기 법원직 발령 시기 및 수도권 확률 계산기</title>
+  <style>
+    :root {
+      --primary: #1e3a8a;
+      --primary-light: #eff6ff;
+      --border: #cbd5e1;
+      --text: #0f172a;
+      --subtext: #475569;
+      --bg: #f8fafc;
+    }
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Malgun Gothic", "맑은 고딕", sans-serif; }
+    body { margin: 0; padding: 20px; background-color: var(--bg); color: var(--text); line-height: 1.5; }
+    .container { max-width: 680px; margin: 0 auto; background: #fff; padding: 28px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); }
+    .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid var(--primary); padding-bottom: 16px; margin-bottom: 24px; gap: 12px; }
+    .header h1 { margin: 0; font-size: 1.35rem; color: var(--primary); }
+    .header p { margin: 4px 0 0; font-size: 0.85rem; color: var(--subtext); line-height: 1.4; }
+    .btn-outline { background: #fff; border: 1px solid var(--primary); color: var(--primary); padding: 8px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; white-space: nowrap; }
+    .btn-outline:hover { background: var(--primary-light); }
+    .form-grid { display: grid; grid-template-columns: 1fr; gap: 16px; margin-bottom: 20px; }
+    .form-group { display: flex; flex-direction: column; }
+    label { font-size: 0.9rem; font-weight: 600; margin-bottom: 6px; color: var(--text); }
+    .hint { font-size: 0.78rem; color: var(--subtext); margin-top: 4px; }
+    select, input { padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.95rem; outline: none; }
+    select:focus, input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1); }
+    .btn-primary { width: 100%; background: var(--primary); color: #fff; border: none; padding: 14px; border-radius: 10px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: background 0.2s; }
+    .btn-primary:hover { background: #172554; }
+    .result-box { display: none; margin-top: 24px; padding: 20px; background: var(--primary-light); border: 1px solid #bfdbfe; border-radius: 12px; }
+    .result-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .badge { background: var(--primary); color: #fff; padding: 4px 10px; border-radius: 999px; font-size: 0.8rem; font-weight: 700; }
+    .result-title { font-size: 1.25rem; font-weight: 800; color: var(--primary); margin: 8px 0; }
+    .result-details { background: #fff; padding: 14px; border-radius: 8px; font-size: 0.9rem; margin-top: 12px; border: 1px solid #e2e8f0; }
+    .result-details ul { margin: 0; padding-left: 18px; }
+    .result-details li { margin-bottom: 6px; }
+    .btn-copy { background: #fff; border: 1px solid #93c5fd; color: var(--primary); padding: 6px 12px; border-radius: 6px; font-size: 0.82rem; font-weight: 600; cursor: pointer; }
+    .btn-copy:hover { background: #dbeafe; }
+    .footer-note { margin-top: 20px; font-size: 0.8rem; color: var(--subtext); border-top: 1px solid #e2e8f0; padding-top: 14px; line-height: 1.6; }
+    .alert-box { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e3a8a; padding: 12px; border-radius: 8px; font-size: 0.84rem; margin-bottom: 16px; line-height: 1.5; }
+    /* Modal */
+    .modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.5); z-index: 100; justify-content: center; align-items: center; padding: 16px; }
+    .modal { background: #fff; max-width: 720px; width: 100%; max-height: 85vh; overflow-y: auto; border-radius: 14px; padding: 24px; }
+    .modal-top { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 16px; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-bottom: 16px; }
+    th, td { border: 1px solid #cbd5e1; padding: 8px; text-align: center; }
+    th { background: #f1f5f9; font-weight: 700; }
+    /* 통계표 인원 열 너비 확보 */
+    th:nth-child(2), td:nth-child(2) { width: 75px; white-space: nowrap; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <div>
+      <h1>54기 발령 시기 및 수도권 확률 계산기</h1>
+      <p>53기 통계보고서 기반 54기 발령 시뮬레이터<br/>54기 장재혁 제작</p>
+    </div>
+    <button class="btn-outline" onclick="openModal()">53기 통계표 보기</button>
+  </div>
+
+  <div class="alert-box">
+    <strong>📢 안내사항:</strong> 본 프로그램은 <strong>53기 통계보고서 기반 54기 발령 시뮬레이터</strong>이며, 법원의 인력수급상황에 따라 실제 발령 시기는 달라질 수 있습니다.<br/>
+    <span id="nationalNotice">💡 <strong>전국모집 안내:</strong> 54기 전국모집 총원(227명)에는 <u>등기직 인원(44명)이 포함</u>되어 있습니다.</span>
+  </div>
+
+  <div class="form-grid">
+    <div class="form-group">
+      <label for="track">모집 구분 선택</label>
+      <select id="track" onchange="updateDefaults()">
+        <option value="national">전국모집 (227명 · 등기직 44명 포함)</option>
+        <option value="chuncheon">춘천 지역모집 (21명)</option>
+        <option value="daejeon">대전 지역모집 (63명)</option>
+        <option value="daegu">대구 지역모집 (61명)</option>
+        <option value="busan">부산 지역모집 (60명)</option>
+        <option value="gwangju">광주 지역모집 (62명)</option>
+        <option value="jeju">제주 지역모집 (6명)</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="total">54기 해당 모집 총 인원 (명)</label>
+      <input type="number" id="total" value="227" min="1" />
+      <span class="hint">모집 구분 선택 시 54기 인원이 자동 입력됩니다</span>
+    </div>
+
+    <div class="form-group">
+      <label for="rank">본인 성적/연수원 합산 등수 (등)</label>
+      <input type="number" id="rank" value="" placeholder="본인 등수를 입력하세요" min="1" />
+      <span class="hint">총 인원 이하의 숫자 입력</span>
+    </div>
+  </div>
+
+  <button class="btn-primary" onclick="calculate()">월별 예상 발령 시기 계산하기</button>
+
+  <div class="result-box" id="resultBox">
+    <div class="result-header">
+      <span class="badge" id="resBadge">계산 결과</span>
+      <button class="btn-copy" onclick="copyResult()">결과 복사하기</button>
+    </div>
+    <div class="result-title" id="resTitle"></div>
+    <div id="resSummary" style="font-size:0.95rem; color:#1e293b;"></div>
+    <div class="result-details" id="resDetails"></div>
+  </div>
+
+  <div class="footer-note">
+    ※ 27년도 인력 수급상황에 따라 발령은 달라지기 때문에 가볍게 참고 정도 하시고 재미로 봐주시면 감사하겠습니다.<br/>
+    모두 원하는 곳으로 발령받으시길 바랍니다!<br/>
+    ※ 전년도 유예자 유입 및 54기 내 앞 순번 유예자 변수는 정확한 파악이 어려워 본 시뮬레이션에서는 제외되었으므로 오차가 발생할 수 있습니다.
+  </div>
+</div>
+
+<!-- 53기 월별 통계 모달 -->
+<div class="modal-backdrop" id="modalBackdrop" onclick="closeModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-top">
+      <strong style="font-size:1.05rem; color:#1e3a8a; line-height:1.4;">
+        53기 월별/일자별 발령 흐름 요약<br/>(총 437명)
+      </strong>
+      <button class="btn-outline" onclick="document.getElementById('modalBackdrop').style.display='none'">닫기</button>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>발령일자</th>
+          <th>발령인원</th>
+          <th>누적 비율</th>
+          <th>주요 특징 및 지역 배정</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>1월 1일</td><td>108명</td><td>24.7%</td><td>신년 정기발령 (수도권 다수, 광주 36명·제주 7명 등)</td></tr>
+        <tr><td>1월 11일</td><td>18명</td><td>28.8%</td><td>1월 중순 추가 발령</td></tr>
+        <tr><td>2월 23일</td><td>187명</td><td>71.6%</td><td>2월 정기인사 최대 집중 (대구·제주 완충 시작)</td></tr>
+        <tr><td>3월 1일~11일</td><td>20명</td><td>76.2%</td><td>광주(3/1 완충) 및 부산(3/11 완충)</td></tr>
+        <tr><td>4월 11일</td><td>15명</td><td>79.6%</td><td>수시 결원 발령</td></tr>
+        <tr><td>5월 1일~21일</td><td>9명</td><td>81.7%</td><td>5월 수시 발령</td></tr>
+        <tr><td>7월 1일~21일</td><td>75명</td><td>98.9%</td><td>하반기 정기인사<br/>(대전 완충, 7/1)</td></tr>
+        <tr><td>9월~11월</td><td>5명</td><td>100.0%</td><td>기타 수시 결원<br/>(춘천 11/1 완충)</td></tr>
+      </tbody>
+    </table>
+    <p style="font-size:0.82rem; color:#475569; margin:0;">
+      * 출처: 54기 장재혁 작성 53기 발령 통계 분석 보고서<br/>(총 437명 기준)
+    </p>
+  </div>
+</div>
+
+<script>
+  const defaultTotals = {
+    national: 227,
+    chuncheon: 21,
+    daejeon: 63,
+    daegu: 61,
+    busan: 60,
+    gwangju: 62,
+    jeju: 6
+  };
+
+  function updateDefaults() {
+    const track = document.getElementById('track').value;
+    document.getElementById('total').value = defaultTotals[track];
+    const nationalNotice = document.getElementById('nationalNotice');
+    if (track === 'national') {
+      nationalNotice.style.display = 'inline';
+    } else {
+      nationalNotice.style.display = 'none';
+    }
+  }
+
+  function calculate() {
+    const track = document.getElementById('track').value;
+    const total = parseInt(document.getElementById('total').value, 10);
+    const rankInput = document.getElementById('rank').value;
+
+    if (!total || rankInput === "" || isNaN(rankInput)) {
+      alert("총 인원과 본인 등수를 정확히 입력해 주세요.");
+      return;
+    }
+
+    const rank = parseInt(rankInput, 10);
+    if (rank < 1 || rank > total) {
+      alert("등수는 1 이상이며 총 인원 이하여야 합니다.");
+      return;
+    }
+
+    const ratio = rank / total;
+    const pctStr = (ratio * 100).toFixed(1);
+
+    let expectedPeriod = "";
+    let detailsHtml = "";
+
+    if (track === "national") {
+      const equiv53 = Math.max(1, Math.ceil(ratio * 171));
+      let spRate = "";
+      
+      if (ratio <= (7 / 171) + 0.0001) {
+        expectedPeriod = "1월 1일 (신년 정기발령)";
+        spRate = "약 90% 이상 (최상위권 수도권 집중)";
+        detailsHtml = `
+          <ul>
+            <li>53기 전국모집(171명 기준) 환산 시 약 <strong>${equiv53}등</strong> (상위 ${pctStr}%)입니다.</li>
+            <li><strong>예상 발령 월: 1월 초</strong> (임용 직후 최우선 발령)</li>
+            <li><strong>수도권 발령 확률: ${spRate}</strong> (서울·인천·의정부·수원 권역 배정 유력)</li>
+          </ul>`;
+      } else if (ratio <= (16 / 171) + 0.0001) {
+        expectedPeriod = "1월 11일 전후 (1월 중순 발령)";
+        spRate = "약 85% ~ 90%";
+        detailsHtml = `
+          <ul>
+            <li>53기 전국모집(171명 기준) 환산 시 약 <strong>${equiv53}등</strong> (상위 ${pctStr}%)입니다.</li>
+            <li><strong>예상 발령 월: 1월 중순</strong> (1월 11일 통지/발령 구간)</li>
+            <li><strong>수도권 발령 확률: ${spRate}</strong></li>
+          </ul>`;
+      } else if (ratio <= (85 / 171) + 0.0001) {
+        expectedPeriod = "2월 23일 전후 (2월 정기인사)";
+        spRate = "약 70% ~ 80% (하위권부터 지방 시작)";
+        detailsHtml = `
+          <ul>
+            <li>53기 전국모집(171명 기준) 환산 시 약 <strong>${equiv53}등</strong> (상위 ${pctStr}%)입니다.</li>
+            <li><strong>예상 발령 월: 2월 말</strong> (2월 23일 정기인사 대발령 구간)</li>
+            <li><strong>수도권 발령 확률: ${spRate}</strong> (하위 등수부터 대구·제주 등 지방 발령 개시)</li>
+          </ul>`;
+      } else if (ratio <= 0.65) {
+        expectedPeriod = "3월 1일 ~ 11일 (3월 정기·수시)";
+        spRate = "약 45% (부산 지역모집 완충 연계)";
+        detailsHtml = `
+          <ul>
+            <li>53기 전국모집(171명 기준) 환산 시 약 <strong>${equiv53}등</strong> (상위 ${pctStr}%)입니다.</li>
+            <li><strong>예상 발령 월: 3월</strong> (부산 지역모집 완충 시점 및 3월 초중순 결원 반영)</li>
+            <li><strong>수도권 발령 확률: ${spRate}</strong></li>
+          </ul>`;
+      } else if (ratio <= 0.78) {
+        expectedPeriod = "4월 11일 전후 (4월 수시 발령)";
+        spRate = "약 35%";
+        detailsHtml = `
+          <ul>
+            <li>53기 전국모집(171명 기준) 환산 시 약 <strong>${equiv53}등</strong> (상위 ${pctStr}%)입니다.</li>
+            <li><strong>예상 발령 월: 4월</strong> (4월 11일자 수시 결원 발령 구간)</li>
+            <li><strong>수도권 발령 확률: ${spRate}</strong></li>
+          </ul>`;
+      } else if (ratio <= 0.88) {
+        expectedPeriod = "5월 1일 ~ 21일 (5월 수시 발령)";
+        spRate = "약 30% (광주 지역모집 완충 연계)";
+        detailsHtml = `
+          <ul>
+            <li>53기 전국모집(171명 기준) 환산 시 약 <strong>${equiv53}등</strong> (상위 ${pctStr}%)입니다.</li>
+            <li><strong>예상 발령 월: 5월</strong> (5월 수시 결원)</li>
+            <li><strong>수도권 발령 확률: ${spRate}</strong></li>
+          </ul>`;
+      } else if (ratio <= 0.97) {
+        expectedPeriod = "7월 1일 ~ 21일 (하반기 정기인사)";
+        spRate = "약 25% (대전 지역모집 완충 연계)";
+        detailsHtml = `
+          <ul>
+            <li>53기 전국모집(171명 기준) 환산 시 약 <strong>${equiv53}등</strong> (상위 ${pctStr}%)입니다.</li>
+            <li><strong>예상 발령 월: 7월</strong> (하반기 정기인사 7/1 대거 발령 및 7/21 수시)</li>
+            <li><strong>수도권 발령 확률: ${spRate}</strong></li>
+          </ul>`;
+      } else {
+        expectedPeriod = "9월 ~ 11월 (연말 수시 발령)";
+        spRate = "20% 미만 (지방 배정 중심)";
+        detailsHtml = `
+          <ul>
+            <li>53기 전국모집(171명 기준) 환산 시 약 <strong>${equiv53}등</strong> (상위 ${pctStr}%)입니다.</li>
+            <li><strong>예상 발령 월: 9월 ~ 11월</strong> (춘천 완충 등 연말 잔여 수시)</li>
+            <li><strong>수도권 발령 확률: ${spRate}</strong></li>
+          </ul>`;
+      }
+    } else {
+      let regionName = "";
+      let monthResult = "";
+      let descText = "";
+
+      if (track === "chuncheon") {
+        regionName = "춘천";
+        if (ratio <= (7 / 30) + 0.0001) { 
+          monthResult = "1월 1일 (신년 정기발령)"; 
+          descText = "춘천 지역모집 초기 배정 구간(53기 30명 중 7등 이내 비율)입니다."; 
+        } else if (ratio <= (8 / 30) + 0.0001) { 
+          monthResult = "1월 11일 (1월 중순 수시발령)"; 
+          descText = "춘천 지역모집 1월 중순 추가 발령 구간(53기 8등 비율)입니다."; 
+        } else if (ratio <= (17 / 30) + 0.0001) { 
+          monthResult = "2월 23일 (2월 정기인사)"; 
+          descText = "춘천 지역모집 2월 정기인사 발령 구간(53기 9~17등 비율)입니다."; 
+        } else if (ratio <= (18 / 30) + 0.0001) { 
+          monthResult = "3월 11일 (3월 수시발령)"; 
+          descText = "춘천 지역모집 3월 수시 발령 구간(53기 18등 비율)입니다."; 
+        } else if (ratio <= (26 / 30) + 0.0001) { 
+          monthResult = "7월 1일 (하반기 정기인사)"; 
+          descText = "춘천 지역모집 7월 1일 하반기 정기인사 발령 구간(53기 19~26등 비율)입니다."; 
+        } else if (ratio <= (29 / 30) + 0.0001) { 
+          monthResult = "7월 21일 (7월 하순 수시발령)"; 
+          descText = "춘천 지역모집 7월 하순 수시 발령 구간(53기 27~29등 비율)입니다."; 
+        } else { 
+          monthResult = "11월 1일 (지역모집 완충 최종)"; 
+          descText = "춘천 지역모집 연말 잔여 인원 전원 완충 시점(53기 30등 비율)입니다."; 
+        }
+      } else if (track === "daejeon") {
+        regionName = "대전";
+        if (ratio <= (5 / 56) + 0.0001) { 
+          monthResult = "1월 1일 (신년 정기발령)"; 
+          descText = "대전 지역모집 초기 발령 구간(53기 56명 중 5등 이내 비율)입니다."; 
+        } else if (ratio <= (7 / 56) + 0.0001) { 
+          monthResult = "1월 11일 (1월 중순 수시발령)"; 
+          descText = "대전 지역모집 1월 중순 추가 발령 구간(53기 6~7등 비율)입니다."; 
+        } else if (ratio <= (41 / 56) + 0.0001) { 
+          monthResult = "2월 23일 (2월 정기인사)"; 
+          descText = "대전 지역모집 2월 정기 대거 발령 구간(53기 8~41등 비율)입니다."; 
+        } else if (ratio <= (46 / 56) + 0.0001) { 
+          monthResult = "3월 1일 ~ 11일 (3월 수시발령)"; 
+          descText = "대전 지역모집 3월 수시 결원 구간(53기 42~46등 비율)입니다."; 
+        } else if (ratio <= (50 / 56) + 0.0001) { 
+          monthResult = "4월 11일 (4월 수시발령)"; 
+          descText = "대전 지역모집 4월 수시 결원 구간(53기 47~50등 비율)입니다."; 
+        } else if (ratio <= (53 / 56) + 0.0001) { 
+          monthResult = "5월 1일 (5월 수시발령)"; 
+          descText = "대전 지역모집 5월 수시 결원 구간(53기 51~53등 비율)입니다."; 
+        } else { 
+          monthResult = "7월 1일 (지역모집 완충 최종)"; 
+          descText = "대전 지역모집 최종 완충 시점(53기 54~56등 비율)이며, 이후 결원부터는 전국모집 인원이 투입됩니다."; 
+        }
+      } else if (track === "daegu") {
+        regionName = "대구";
+        if (ratio <= (33 / 56) + 0.0001) { 
+          monthResult = "1월 1일 (조기 정기발령)"; 
+          descText = "대구 지역모집 초기 대거 발령 구간(53기 56명 중 33등 이내 비율)입니다."; 
+        } else if (ratio <= (34 / 56) + 0.0001) { 
+          monthResult = "1월 11일 (1월 중순 수시발령)"; 
+          descText = "대구 지역모집 1월 중순 추가 발령 구간(53기 34등 비율)입니다."; 
+        } else { 
+          monthResult = "2월 23일 (지역모집 완충 완료)"; 
+          descText = "대구 지역모집 최종 완충 시점(53기 35~56등 비율)이며, 이후 결원부터는 전국모집 인원이 투입됩니다."; 
+        }
+      } else if (track === "busan") {
+        regionName = "부산";
+        if (ratio <= (13 / 53) + 0.0001) { 
+          monthResult = "1월 1일 (신년 정기발령)"; 
+          descText = "부산 지역모집 초기 발령 구간(53기 53명 중 13등 이내 비율)입니다."; 
+        } else if (ratio <= (17 / 53) + 0.0001) { 
+          monthResult = "1월 11일 (1월 중순 수시발령)"; 
+          descText = "부산 지역모집 1월 중순 추가 발령 구간(53기 14~17등 비율)입니다."; 
+        } else if (ratio <= (52 / 53) + 0.0001) { 
+          monthResult = "2월 23일 (2월 정기인사)"; 
+          descText = "부산 지역모집 2월 정기 대거 발령 구간(53기 18~52등 비율)입니다."; 
+        } else { 
+          monthResult = "3월 11일 (지역모집 완충 최종)"; 
+          descText = "부산 지역모집 최종 완충 시점(53기 53등 비율)이며, 이후 결원부터는 전국모집 인원이 투입됩니다."; 
+        }
+      } else if (track === "gwangju") {
+        regionName = "광주";
+        if (ratio <= (36 / 60) + 0.0001) { 
+          monthResult = "1월 1일 (조기 정기발령)"; 
+          descText = "광주 지역모집 초기 대거 발령 구간(53기 60명 중 36등 이내 비율)입니다."; 
+        } else if (ratio <= (37 / 60) + 0.0001) { 
+          monthResult = "1월 11일 (1월 중순 수시발령)"; 
+          descText = "광주 지역모집 1월 중순 추가 발령 구간(53기 37등 비율)입니다."; 
+        } else if (ratio <= (58 / 60) + 0.0001) { 
+          monthResult = "2월 23일 (2월 정기인사)"; 
+          descText = "광주 지역모집 2월 정기 발령 구간(53기 38~58등 비율)입니다."; 
+        } else { 
+          monthResult = "3월 1일 (지역모집 완충 최종)"; 
+          descText = "광주 지역모집 최종 완충 시점(53기 59~60등 비율)이며, 이후 결원은 전국모집 인원이 투입됩니다."; 
+        }
+      } else if (track === "jeju") {
+        regionName = "제주";
+        if (ratio <= (7 / 11) + 0.0001) { 
+          monthResult = "1월 1일 (신년 정기발령)"; 
+          descText = "제주 지역모집 초기 발령 구간(53기 11명 중 7등 이내 비율)입니다."; 
+        } else { 
+          monthResult = "2월 23일 (지역모집 완충 완료)"; 
+          descText = "제주 지역모집 잔여 인원 완충 시점(53기 8~11등 비율)이며, 이후 결원부터는 전국모집 인원이 투입됩니다."; 
+        }
+      }
+
+      expectedPeriod = monthResult;
+      detailsHtml = `
+        <ul>
+          <li><strong>${regionName} 지역모집</strong> 내 실질 순위: <strong>${rank}등 / ${total}명 (상위 ${pctStr}%)</strong></li>
+          <li><strong>월별 발령 흐름:</strong> ${descText}</li>
+          <li>※ <u>지역모집 인원이 완전히 소진(완충)되는 시점 이후</u>의 결원부터는 해당 지역모집이 아닌 <strong>전국모집 인원이 투입</strong>됩니다.</li>
+        </ul>`;
+    }
+
+    document.getElementById('resBadge').innerText = `실질 순위 ${rank}등 / ${total}명 (상위 ${pctStr}%)`;
+    document.getElementById('resTitle').innerText = expectedPeriod;
+    document.getElementById('resSummary').innerHTML = `입력 등수 <strong>${rank}등</strong> 기준 시뮬레이션 결과`;
+    document.getElementById('resDetails').innerHTML = detailsHtml;
+    document.getElementById('resultBox').style.display = 'block';
+  }
+
+  function copyResult() {
+    const badge = document.getElementById('resBadge').innerText;
+    const title = document.getElementById('resTitle').innerText;
+    const trackText = document.getElementById('track').options[document.getElementById('track').selectedIndex].text;
+    const text = `[54기 월별 발령 시기 예측 결과]\n- 모집구분: ${trackText}\n- 환산위치: ${badge}\n- 예상시기: ${title}\n(53기 통계 보고서 기반 / 가벼운 참고용)`;
+    navigator.clipboard.writeText(text).then(() => {
+      alert("예측 결과가 클립보드에 복사되었습니다!");
+    });
+  }
+
+  function openModal() {
+    document.getElementById('modalBackdrop').style.display = 'flex';
+  }
+  function closeModal(e) {
+    if (e.target.id === 'modalBackdrop') {
+      document.getElementById('modalBackdrop').style.display = 'none';
+    }
+  }
+</script>
+
+</body>
+</html>
